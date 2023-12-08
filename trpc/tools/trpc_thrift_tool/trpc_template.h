@@ -12,11 +12,11 @@ const std::string_view trpc_source_header_fmt=R"(
 
 
 const std::string_view trpc_service_sync_method_fmt=R"(
-virtual ::trpc::Status %s(::trpc::ServerContextPtr context, const %s request, %s* response);
+virtual ::trpc::Status %s(%s context, const %s request, %s* response);
 )";
 
 const std::string_view trpc_service_async_method_fmt=R"(
-virtual ::trpc::Future<%s> %s(::trpc::ServerContextPtr context, const %s request);
+virtual ::trpc::Future<%s> %s(%s context, const %s request);
 )";
 
 
@@ -41,6 +41,6 @@ const std::string_view trpc_service_server_method_impl=R"(
 const std::string_view trpc_service_client_method_impl=R"(
 ::trpc::Status %s::%s(const ::trpc::ClientContextPtr& context, const %s& request, %s* response) {
   if (context->GetFuncName().empty()) context->SetFuncName(%s);
-  return UnaryInvoke<::trpc::test::helloworld::HelloRequest, ::trpc::test::helloworld::HelloReply>(context, request, response);
+  return UnaryInvoke<%s, %s>(context, request, response);
 }
 )";

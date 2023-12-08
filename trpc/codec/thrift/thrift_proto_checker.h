@@ -7,7 +7,7 @@
 #include <any>
 #include <deque>
 
-#include "trpc/common/buffer.h"
+#include "trpc/util/buffer/buffer.h"
 #include "trpc/runtime/iomodel/reactor/common/connection.h"
 
 namespace trpc {

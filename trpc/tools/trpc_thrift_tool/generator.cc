@@ -248,20 +248,21 @@ bool Generator::generate_thrift_type_file(idl_info& cur_info)
 
 	for (auto& desc : cur_info.desc_list)
 	{
-		if (desc.block_type == "service")
-		{
-			this->printer.print_service_namespace(desc.block_name);
-			for (auto& rpc : desc.rpcs)
-			{
-				this->thrift_replace_include(cur_info, rpc.req_params);
-				this->printer.print_rpc_thrift_struct_class(rpc.request_name, rpc.req_params,cur_info);
-				this->thrift_replace_include(cur_info, rpc.resp_params);
-				this->printer.print_rpc_thrift_struct_class(rpc.response_name, rpc.resp_params,cur_info);
-			}
+		// if (desc.block_type == "service")
+		// {
+		// 	this->printer.print_service_namespace(desc.block_name);
+		// 	for (auto& rpc : desc.rpcs)
+		// 	{
+		// 		this->thrift_replace_include(cur_info, rpc.req_params);
+		// 		this->printer.print_rpc_thrift_struct_class(rpc.request_name, rpc.req_params,cur_info);
+		// 		this->thrift_replace_include(cur_info, rpc.resp_params);
+		// 		this->printer.print_rpc_thrift_struct_class(rpc.response_name, rpc.resp_params,cur_info);
+		// 	}
 
-			this->printer.print_service_namespace_end(desc.block_name);
-		}
-		else if (desc.block_type == "struct" || desc.block_type == "union")
+		// 	this->printer.print_service_namespace_end(desc.block_name);
+		// }
+		// else 
+		if (desc.block_type == "struct" || desc.block_type == "union")
 		{
 			this->thrift_replace_include(cur_info, desc.st.params);
 			this->printer.print_rpc_thrift_struct_class(desc.block_name, desc.st.params,cur_info);
@@ -287,7 +288,7 @@ bool Generator::generate_trpc_thrift_file(const idl_info& cur_info)
 		return false;
 	}
 
-	this->printer.print_srpc_include(this->prefix, cur_info.package_name);
+	this->printer.print_srpc_header_include(this->prefix, cur_info.package_name);
 
 	std::vector<std::string> rpc_list;
 	std::string package;
@@ -315,7 +316,7 @@ bool Generator::generate_trpc_thrift_file(const idl_info& cur_info)
 		return false;
 	}
 
-	this->printer.print_srpc_include(this->prefix, cur_info.package_name);
+	this->printer.print_srpc_source_include(this->prefix, cur_info.package_name);
 
 	for (const auto& desc : cur_info.desc_list)
 	{

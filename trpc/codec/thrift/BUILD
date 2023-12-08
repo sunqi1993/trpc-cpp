@@ -28,7 +28,7 @@ cc_library(
         "//trpc/codec:protocol",
         "//trpc/codec/thrift/rpc_thrift:rpc_thrift_buffer",
         "//trpc/codec/thrift/rpc_thrift:rpc_thrift_enum",
-        "//trpc/common:buffer",
+        "//trpc/util/buffer",
         "//trpc/common/logging:trpc_logging",
     ],
 )
@@ -99,7 +99,7 @@ cc_library(
     deps = [
         ":thrift_protocol",
         "//trpc/codec/thrift/rpc_thrift:rpc_thrift_buffer",
-        "//trpc/common:buffer",
+        "//trpc/util/buffer:buffer",
         "//trpc/common/logging:trpc_logging",
         "//trpc/runtime/iomodel/reactor/default:tcp_connection",
     ],

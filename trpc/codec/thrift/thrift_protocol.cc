@@ -7,7 +7,7 @@
 #include <utility>
 
 #include "trpc/codec/thrift/rpc_thrift/rpc_thrift_buffer.h"
-#include "trpc/common/buffer.h"
+#include "trpc/util/buffer/buffer.h"
 #include "trpc/common/logging/trpc_logging.h"
 
 namespace trpc {

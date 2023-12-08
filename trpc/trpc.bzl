@@ -703,8 +703,15 @@ def trpc_thrift_library(
     )
 
     runtime_deps = deps + [
-        "//trpc/codec/thrift/rpc_thrift:rpc_message_thrift",
-        "//trpc/codec/thrift/rpc_thrift:rpc_thrift_buffer",
+        "@trpc_cpp//trpc/codec/thrift/rpc_thrift:rpc_message_thrift",
+        "@trpc_cpp//trpc/codec/thrift/rpc_thrift:rpc_thrift_buffer",
+        "@trpc_cpp//trpc/server:rpc_async_method_handler",
+        "@trpc_cpp//trpc/server:rpc_method_handler",
+        "@trpc_cpp//trpc/server/rpc:rpc_service_impl",
+        "@trpc_cpp//trpc/server/rpc:stream_rpc_method_handler",
+        "@trpc_cpp//trpc/client:rpc_service_proxy",
+        "@trpc_cpp//trpc/server:rpc_service_impl",
+        
         ]
 
 

@@ -414,23 +414,32 @@ public:
 			if (ele.required_state != trpc::kThriftStructFieldRequired)
 				p_isset = "(const char *)(&st->__isset." + ele.var_name + ") - base";
 
-			fprintf(this->out_file, "\t\telements->push_back({subtype_%d::get_instance(), \"%s\", %s, (const char *)(&st->%s) - base, %d, %d});\n",
+			fprintf(this->out_file, "\t\telements->push_back({subtype_%d::GetInstance(), \"%s\", %s, (const char *)(&st->%s) - base, %d, %d});\n",
 					i, ele.var_name.c_str(), p_isset.c_str(), ele.var_name.c_str(), ele.field_id, ele.required_state);
 		}
 
 		fprintf(this->out_file, thrift_struct_class_end_format.c_str(), class_name.c_str());
 	}
 
-	void print_srpc_include(const std::string& prefix, const std::vector<std::string>& package)
+	void print_srpc_header_include(const std::string& prefix, const std::vector<std::string>& package)
 	{
-		fprintf(this->out_file, this->srpc_include_format.c_str(), prefix.c_str(),
-				this->is_thrift ? "thrift" : "pb",prefix.c_str(),"trpc");
+		fprintf(this->out_file, this->srpc_header_include_format.c_str(), prefix.c_str(),
+				this->is_thrift ? "thrift" : "pb");
 
 		for (size_t i = 0; i < package.size(); i++)
 			fprintf(this->out_file, this->namespace_package_start_format.c_str(),
 					package[i].c_str());
 	}
 
+	void print_srpc_source_include(const std::string& prefix, const std::vector<std::string>& package)
+	{
+		fprintf(this->out_file, this->srpc_source_include_format.c_str(), prefix.c_str(),
+				this->is_thrift ? "thrift" : "pb",prefix.c_str(),"trpc");
+
+		for (size_t i = 0; i < package.size(); i++)
+			fprintf(this->out_file, this->namespace_package_start_format.c_str(),
+					package[i].c_str());
+	}
 	void print_server_file_include(const std::string& prefix)
 	{
 		fprintf(this->out_file, this->srpc_file_include_format.c_str(), prefix.c_str());
@@ -546,49 +555,49 @@ public:
 
 		/// server
 		// sync
-		fprintf(this->out_file,  this->server_class_constructor_format.c_str(),service.c_str(),"::trpc::RpcServiceImpl");
+		fprintf(this->out_file,  this->server_class_constructor_format.c_str(),service.c_str(),"::trpc::RpcServiceImpl",(service+"();").c_str());
 		for (const auto& rpc : rpcs)
 		{
 			auto req =rpc.req_params[0].type_name;
 			auto rsp =rpc.resp_params[0].type_name;
 			fprintf(this->out_file, trpc_service_sync_method_fmt.data(),
-					rpc.method_name.c_str(), (req+"*").c_str(),rsp.c_str());
+					rpc.method_name.c_str(), "::trpc::ServerContextPtr",(req+"*").c_str(),rsp.c_str());
 		}
 		fprintf(this->out_file, "%s", this->server_class_end_format.c_str());
 
 		// async
-		fprintf(this->out_file,  this->server_class_constructor_format.c_str(),("Async"+service).c_str(),"::trpc::AsyncRpcServiceImpl");
+		fprintf(this->out_file,  this->server_class_constructor_format.c_str(),("Async"+service).c_str(),"::trpc::AsyncRpcServiceImpl",("Async"+service+"();").c_str());
 		for (const auto& rpc : rpcs)
 		{
 			auto req =rpc.req_params[0].type_name;
 			auto rsp =rpc.resp_params[0].type_name;
-			std::string method_fmt="virtual ::trpc::Future<%s> %s(::trpc::ServerContextPtr context, const %s* request)\n";
+			std::string method_fmt="virtual ::trpc::Future<%s> %s(const ::trpc::ServerContextPtr& context, const %s* request)\n";
 			fprintf(this->out_file, trpc_service_async_method_fmt.data(),rsp.c_str(),
-					rpc.method_name.c_str(), (req+"*").c_str());
+					rpc.method_name.c_str(),"const ::trpc::ServerContextPtr&", (req+"*").c_str());
 		}
 		fprintf(this->out_file, "%s", this->server_class_end_format.c_str());
 
 		/// client
 		//sync
-		fprintf(this->out_file,  this->server_class_constructor_format.c_str(),(service+"ServiceProxy").c_str(),"::trpc::RpcServiceProxy");
+		fprintf(this->out_file,  this->server_class_constructor_format.c_str(),(service+"ServiceProxy").c_str(),"::trpc::RpcServiceProxy","");
 		for (const auto& rpc : rpcs)
 		{
 			auto req =rpc.req_params[0].type_name;
 			auto rsp =rpc.resp_params[0].type_name;
 			fprintf(this->out_file, trpc_service_sync_method_fmt.data(),
-					rpc.method_name.c_str(), (req+"&").c_str(),rsp.c_str());
+					rpc.method_name.c_str(), "const ::trpc::ClientContextPtr&",(req+"&").c_str(),rsp.c_str());
 		}
 		fprintf(this->out_file, "%s", this->server_class_end_format.c_str());
 
 		// async
-		fprintf(this->out_file,  this->server_class_constructor_format.c_str(),("Async"+service+"ServiceProxy").c_str(),":trpc::RpcServiceProxy");
+		fprintf(this->out_file,  this->server_class_constructor_format.c_str(),("Async"+service+"ServiceProxy").c_str(),"::trpc::RpcServiceProxy","");
 		for (const auto& rpc : rpcs)
 		{
 			auto req =rpc.req_params[0].type_name;
 			auto rsp =rpc.resp_params[0].type_name;
-			std::string method_fmt="virtual ::trpc::Future<%s> %s(::trpc::ServerContextPtr context, const %s* request);\n";
+			std::string method_fmt="virtual ::trpc::Future<%s> %s(const ::trpc::ClientContextPtr& context, const %s* request);\n";
 			fprintf(this->out_file, trpc_service_async_method_fmt.data(),rsp.c_str(),
-					rpc.method_name.c_str(), (req+"&").c_str());
+					rpc.method_name.c_str(), "const ::trpc::ClientContextPtr&" ,(req+"&").c_str());
 		}
 		fprintf(this->out_file, "%s", this->server_class_end_format.c_str());
 	}
@@ -669,7 +678,7 @@ public:
 			auto rsp_typename =rpc.resp_params[0].type_name;
 			// this->print_class_method_impl(trpc_service_client_method_impl,service+"ServiceProxy", rpc.method_name, req_typename,rsp_typename);  
 
-			fprintf(this->out_file, trpc_service_client_method_impl.data(),(service+"ServiceProxy").c_str(),rpc.method_name.c_str(),req_typename.c_str(),rsp_typename.c_str(),methods[i].c_str());
+			fprintf(this->out_file, trpc_service_client_method_impl.data(),(service+"ServiceProxy").c_str(),rpc.method_name.c_str(),req_typename.c_str(),rsp_typename.c_str(),methods[i].c_str(),req_typename.c_str(),rsp_typename.c_str());
 			i++;
 		}
 
@@ -1118,13 +1127,20 @@ private:
 #include "trpc/codec/thrift/rpc_thrift/rpc_thrift_idl.h"
 )";
 
-	std::string srpc_include_format = R"(#pragma once
+	std::string srpc_source_include_format = R"(
 #include <stdio.h>
 #include <string>
 #include "%s.%s.h"
 #include "%s.%s.h"
 #include "trpc/server/rpc_async_method_handler.h"
 #include "trpc/server/rpc_method_handler.h"
+)";
+
+	std::string srpc_header_include_format = R"(#pragma once
+#include "%s.%s.h"
+
+#include "trpc/client/rpc_service_proxy.h"
+#include "trpc/server/rpc_service_impl.h"
 )";
 
 	std::string thrift_include_package_format = R"(
@@ -1247,6 +1263,7 @@ rpc_buf_t *req_buf, rpc_buf_t *resp_buf)
 class %s : public %s
 {
 public:
+	%s
 	// please implement these methods in server.cc
 )";
 
@@ -1730,8 +1747,8 @@ class %s : public trpc::ThriftIDLMessage
 public:
 )";
 	std::string thrift_struct_class_constructor_end_format = R"(
-		this->elements = trpc::ThriftElementsImpl<%s>::get_elements_instance();
-		this->descriptor = trpc::ThriftDescriptorImpl<%s, trpc::TDT_STRUCT, void, void>::get_instance();
+		this->elements = trpc::ThriftElementsImpl<%s>::GetInstance();
+		this->descriptor = trpc::ThriftDescriptorImpl<%s, trpc::kStruct, void, void>::GetInstance();
 	}
 )";
 	std::string thrift_struct_class_end_format = R"(
