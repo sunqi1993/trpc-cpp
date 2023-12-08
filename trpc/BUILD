@@ -109,3 +109,7 @@ config_setting(
     values = {"define": "trpc_enable_http_transinfo_base64=true"},
 )
 
+config_setting(
+    name = "trpc_include_codec_thrift",
+    values = {"define": "trpc_include_codec_thrift=true"},
+)

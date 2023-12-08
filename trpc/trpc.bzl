@@ -10,6 +10,7 @@
 #
 """This module is used to generate corresponding cc/h files and stub code for pb files."""
 load("@bazel_skylib//lib:versions.bzl", "versions")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 def _GetPath(ctx, path):
     if ctx.label.workspace_root:
@@ -644,4 +645,82 @@ def trpc_proto_library(
         gen_pbcc = gen_pbcc,
         enable_explicit_link_proto = enable_explicit_link_proto,
         **kargs
+    )
+
+
+def trpc_thrift_library(
+        name,
+        srcs,
+        deps = [],
+        type = "thrift",
+        out_prefix = "",
+        visibility = None):
+    output_directory = (
+        ("$(@D)/%s" % (out_prefix)) if len(srcs) > 1 else ("$(@D)")
+    )
+
+    proto_output_headers = [
+        (out_prefix + "%s.trpc.h") % (s.replace(".%s" % type, "").split("/")[-1])
+        for s in srcs
+    ] + [
+        (out_prefix + "%s.trpc.cc") % (s.replace(".%s" % type, "").split("/")[-1])
+        for s in srcs
+    ]
+    thrift_output_headers = [
+        (out_prefix + "%s.thrift.h") % (s.replace(".%s" % type, "").split("/")[-1])
+        for s in srcs
+    ]
+
+    if type == "thrift":
+        output_headers = thrift_output_headers + proto_output_headers
+        gen_proto = "thrift"
+    if type == "proto":
+        output_headers = proto_output_headers
+        gen_proto = "protobuf"
+    print(output_headers)
+
+    srcs_lib = "%s_srcs" % (name)
+
+    tool_path ="@trpc_cpp//trpc/tools/trpc_thrift_tool:trpc_thrift_tool"
+
+    genrule_cmd = " ".join([
+        "SRCS=($(SRCS));",
+        "for f in $${SRCS[@]:0:%s}; do" % len(srcs),
+        "$(location %s) %s" % (tool_path, type),
+        "-f $$f",
+        "-o %s ;" % output_directory,
+        "done",
+    ])
+
+    native.genrule(
+        name = srcs_lib,
+        srcs = srcs,
+        outs = output_headers,
+        tools = [tool_path],
+        cmd = genrule_cmd,
+        output_to_bindir = True,
+        message = "Generating srpc files for %s:" % (name),
+    )
+
+    runtime_deps = deps + [
+        "//trpc/codec/thrift/rpc_thrift:rpc_message_thrift",
+        "//trpc/codec/thrift/rpc_thrift:rpc_thrift_buffer",
+        ]
+
+
+    cc_library(
+        name = name,
+        hdrs = [
+            ":" + srcs_lib,
+        ],
+        srcs = [
+            ":" + srcs_lib,
+        ],
+        includes = ["./"],
+        features = [
+            "-parse_headers",
+        ],
+        deps = runtime_deps,
+        linkstatic = 1,
+        visibility = visibility,
     )
