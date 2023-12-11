@@ -30,7 +30,7 @@ const std::string_view trpc_service_server_ctor_reg_method_fmt=R"(
 AddRpcServiceMethod(new ::trpc::RpcServiceMethod(%s, ::trpc::MethodType::UNARY, new ::trpc::%sRpcMethodHandler<%s, %s>(std::bind(&%s::%s, this, std::placeholders::_1, std::placeholders::_2%s))));
 )";
 
-const std::string_view trpc_service_server_method_impl=R"(
+const std::string_view trpc_service_server_sync_method_impl=R"(
 ::trpc::Status %s::%s(::trpc::ServerContextPtr context, const %s* request, %s* response) {
   (void)context;
   (void)request;
@@ -38,6 +38,13 @@ const std::string_view trpc_service_server_method_impl=R"(
   return ::trpc::Status(-1, "");
 }
 )";
+
+const std::string_view trpc_service_server_async_method_impl=R"(
+::trpc::Future<%s> %s::%s(const ::trpc::ServerContextPtr& context, const %s* request) {
+  return ::trpc::MakeExceptionFuture<%s>(::trpc::CommonException("Unimplemented"));
+}
+)";
+
 const std::string_view trpc_service_client_method_impl=R"(
 ::trpc::Status %s::%s(const ::trpc::ClientContextPtr& context, const %s& request, %s* response) {
   if (context->GetFuncName().empty()) context->SetFuncName(%s);

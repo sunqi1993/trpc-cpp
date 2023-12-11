@@ -668,9 +668,13 @@ public:
 		for(auto& rpc:rpcs){
 			auto req_typename =rpc.req_params[0].type_name;
 			auto rsp_typename =rpc.resp_params[0].type_name;
-			this->print_class_method_impl(trpc_service_server_method_impl,service, rpc.method_name, req_typename,rsp_typename);   
+			this->print_class_method_impl(trpc_service_server_sync_method_impl,service, rpc.method_name, req_typename,rsp_typename);   
 		}
-
+		for(auto& rpc:rpcs){
+			auto req_typename =rpc.req_params[0].type_name;
+			auto rsp_typename =rpc.resp_params[0].type_name;
+			fprintf(this->out_file,trpc_service_server_async_method_impl.data(),rsp_typename.c_str(),("Async"+service).c_str(),rpc.method_name.c_str(),req_typename.c_str(),rsp_typename.c_str());
+		}
 		// 客户端方法
 		int i = 0;
 		for(auto& rpc:rpcs){
