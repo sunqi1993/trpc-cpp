@@ -30,6 +30,7 @@ cc_library(
         "//trpc/util/buffer:noncontiguous_buffer",
         "//trpc/util/buffer:zero_copy_stream",
         "//trpc/util/log:logging",
+        "//trpc/codec/thrift/rpc_thrift:rpc_message_thrift",
         "@com_google_protobuf//:protobuf",
     ],
 )

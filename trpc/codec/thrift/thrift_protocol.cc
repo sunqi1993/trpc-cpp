@@ -2,6 +2,7 @@
 // All rights reserved.
 
 #ifdef BUILD_INCLUDE_CODEC_THRIFT
+
 #include "trpc/codec/thrift/thrift_protocol.h"
 
 #include <utility>
@@ -109,7 +110,7 @@ bool ThriftRequestProtocol::ZeroCopyEncode(NoncontiguousBuffer& buff) {
                                   message_header.sequence_id, message_header.is_strict);
 
   // 3. write response body
-  message_builder.Append(std::move(struct_body));
+    message_builder.Append(std::move(struct_body));
   buff = message_builder.DestructiveGet();
 
   return true;
@@ -125,30 +126,30 @@ bool ThriftRequestProtocol::SetRequestId(uint32_t req_id) {
   return true;
 }
 
-void ThriftRequestProtocol::SetCallType(RpcCallType call_type) {
-  if (call_type == RpcCallType::UNARY_CALL) {
-    message_header.message_type = codec::ToUType(ThriftMessageType::kCall);
-  } else if (call_type == RpcCallType::ONEWAY_CALL) {
-    message_header.message_type = codec::ToUType(ThriftMessageType::kOneway);
-  }
-}
+// void ThriftRequestProtocol::SetCallType(RpcCallType call_type) {
+//   if (call_type == RpcCallType::UNARY_CALL) {
+//     message_header.message_type = codec::ToUType(ThriftMessageType::kCall);
+//   } else if (call_type == RpcCallType::ONEWAY_CALL) {
+//     message_header.message_type = codec::ToUType(ThriftMessageType::kOneway);
+//   }
+// }
 
-RpcCallType ThriftRequestProtocol::GetCallType() {
-  return message_header.message_type == codec::ToUType(ThriftMessageType::kCall) ? RpcCallType::UNARY_CALL
-                                                                                 : RpcCallType::ONEWAY_CALL;
-}
+// RpcCallType ThriftRequestProtocol::GetCallType() {
+//   return message_header.message_type == codec::ToUType(ThriftMessageType::kCall) ? RpcCallType::UNARY_CALL
+//                                                                                  : RpcCallType::ONEWAY_CALL;
+// }
 
-void ThriftRequestProtocol::SetFuncName(const std::string& func_name) { message_header.function_name = func_name; }
+void ThriftRequestProtocol::SetFuncName(std::string func_name) { message_header.function_name = func_name; }
 
-const std::string& ThriftRequestProtocol::GetFuncName() { return message_header.function_name; }
+const std::string& ThriftRequestProtocol::GetFuncName() const { return message_header.function_name; }
 
 NoncontiguousBuffer ThriftRequestProtocol::GetNonContiguousProtocolBody() { return std::move(struct_body); }
 
 void ThriftRequestProtocol::SetNonContiguousProtocolBody(NoncontiguousBuffer&& buff) { struct_body = std::move(buff); }
 
-uint8_t ThriftRequestProtocol::GetEncodeType() { return EncodeType::THRIFT; }
+// uint8_t ThriftRequestProtocol::GetEncodeType() { return EncodeType::THRIFT; }
 
-uint32_t ThriftRequestProtocol::GetMessageSize() { return static_cast<uint32_t>(message_header.frame_size); }
+uint32_t ThriftRequestProtocol::GetMessageSize()const  { return static_cast<uint32_t>(message_header.frame_size); }
 
 void ThriftRequestProtocol::SetRequestMessageHeader(ThriftMessageHeader&& request_message_header) {
   message_header = std::move(request_message_header);
@@ -172,6 +173,7 @@ bool ThriftResponseProtocol::ZeroCopyEncode(NoncontiguousBuffer& buff) {
                                   message_header.sequence_id, message_header.is_strict);
 
   // 3. write response body
+  thrift_buffer.WriteFieldBegin(12, 0);
   message_builder.Append(std::move(struct_body));
   buff = message_builder.DestructiveGet();
 
@@ -208,31 +210,31 @@ bool ThriftResponseProtocol::SetRequestId(uint32_t req_id) {
   return true;
 }
 
-void ThriftResponseProtocol::SetCallType(RpcCallType call_type) {
-  if (call_type == RpcCallType::UNARY_CALL || call_type == RpcCallType::ONEWAY_CALL) {
-    message_header.message_type = codec::ToUType(ThriftMessageType::kReply);
-  }
-}
+// void ThriftResponseProtocol::SetCallType(RpcCallType call_type) {
+//   if (call_type == RpcCallType::UNARY_CALL || call_type == RpcCallType::ONEWAY_CALL) {
+//     message_header.message_type = codec::ToUType(ThriftMessageType::kReply);
+//   }
+// }
 
-RpcCallType ThriftResponseProtocol::GetCallType() {
-  if (message_header.message_type == codec::ToUType(ThriftMessageType::kReply) ||
-      message_header.message_type == codec::ToUType(ThriftMessageType::kException)) {
-    return RpcCallType::UNARY_CALL;
-  }
-  return RpcCallType::ONEWAY_CALL;
-}
+// RpcCallType ThriftResponseProtocol::GetCallType() {
+//   if (message_header.message_type == codec::ToUType(ThriftMessageType::kReply) ||
+//       message_header.message_type == codec::ToUType(ThriftMessageType::kException)) {
+//     return RpcCallType::UNARY_CALL;
+//   }
+//   return RpcCallType::ONEWAY_CALL;
+// }
 
-void ThriftResponseProtocol::SetFuncName(const std::string& func_name) { message_header.function_name = func_name; }
+void ThriftResponseProtocol::SetFuncName(std::string func_name) { message_header.function_name = func_name; }
 
-const std::string& ThriftResponseProtocol::GetFuncName() { return message_header.function_name; }
+const std::string& ThriftResponseProtocol::GetFuncName() const { return message_header.function_name; }
 
 NoncontiguousBuffer ThriftResponseProtocol::GetNonContiguousProtocolBody() { return std::move(struct_body); }
 
 void ThriftResponseProtocol::SetNonContiguousProtocolBody(NoncontiguousBuffer&& buff) { struct_body = std::move(buff); }
 
-uint8_t ThriftResponseProtocol::GetEncodeType() { return EncodeType::THRIFT; }
+// uint8_t ThriftResponseProtocol::GetEncodeType() { return EncodeType::THRIFT; }
 
-uint32_t ThriftResponseProtocol::GetMessageSize() { return static_cast<uint32_t>(message_header.frame_size); }
+uint32_t ThriftResponseProtocol::GetMessageSize() const { return static_cast<uint32_t>(message_header.frame_size); }
 
 void ThriftResponseProtocol::SetResponseMessageHeader(ThriftMessageHeader&& response_message_header) {
   message_header = std::move(response_message_header);

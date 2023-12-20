@@ -21,8 +21,6 @@ class ThriftServerCodec : public trpc::ServerCodec {
  public:
   [[nodiscard]] std::string Name() const override { return "thrift"; }
 
-  [[nodiscard]] bool SupportZeroCopy() const override { return true; }
-
   /// @brief 协议完整性检查
   /// @param conn 对当前二进制数据进行协议完整性检查时所在的连接对象
   /// @param in 从socket上读取的非连续的二进制数据

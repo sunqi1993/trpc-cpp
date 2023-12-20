@@ -39,6 +39,7 @@ cc_library(
         "//trpc/serialization/json:json_serialization",
         "//trpc/serialization/noop:noop_serialization",
         "//trpc/serialization/pb:pb_serialization",
+        "//trpc/serialization/thrift:thrift_serialization",
     ],
 )
 

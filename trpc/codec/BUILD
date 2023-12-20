@@ -85,6 +85,8 @@ cc_library(
         "//trpc/codec/redis:redis_client_codec",
         "//trpc/codec/trpc:trpc_client_codec",
         "//trpc/codec/trpc:trpc_server_codec",
+        "//trpc/codec/thrift:thrift_server_codec",
+        "//trpc/codec/thrift:thrift_client_codec",
         #"//trpc/codec/trpc_http:trpc_http_server_codec",
     ],
 )

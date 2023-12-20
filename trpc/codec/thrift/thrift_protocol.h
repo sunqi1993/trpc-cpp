@@ -43,18 +43,18 @@ class ThriftRequestProtocol : public trpc::Protocol {
   bool GetRequestId(uint32_t& req_id) const override;
   bool SetRequestId(uint32_t req_id) override;
 
-  void SetCallType(RpcCallType call_type) override;
-  RpcCallType GetCallType() override;
+  // void SetCallType(RpcCallType call_type) override;
+  // RpcCallType GetCallType() override;
 
-  void SetFuncName(const std::string& func_name) override;
-  const std::string& GetFuncName() override;
+  void SetFuncName(std::string func_name) override;
+  const std::string& GetFuncName() const override;
 
   NoncontiguousBuffer GetNonContiguousProtocolBody() override;
   void SetNonContiguousProtocolBody(NoncontiguousBuffer&& buff) override;
 
-  uint8_t GetEncodeType() override;
+  // uint8_t GetEncodeType() override;
 
-  uint32_t GetMessageSize() override;
+  uint32_t GetMessageSize() const override;
 
   void SetRequestMessageHeader(ThriftMessageHeader&& request_message_header);
 
@@ -71,18 +71,18 @@ class ThriftResponseProtocol : public trpc::Protocol {
   bool GetRequestId(uint32_t& req_id) const override;
   bool SetRequestId(uint32_t req_id) override;
 
-  void SetCallType(RpcCallType call_type) override;
-  RpcCallType GetCallType() override;
+  // void SetCallType(RpcCallType call_type) ;
+  // RpcCallType GetCallType() ;
 
-  void SetFuncName(const std::string& func_name) override;
-  const std::string& GetFuncName() override;
+  void SetFuncName(std::string func_name) override;
+  const std::string& GetFuncName() const override;
 
   NoncontiguousBuffer GetNonContiguousProtocolBody() override;
   void SetNonContiguousProtocolBody(NoncontiguousBuffer&& buff) override;
 
-  uint8_t GetEncodeType() override;
+  // uint8_t GetEncodeType() override;
 
-  uint32_t GetMessageSize() override;
+  uint32_t GetMessageSize() const override;
 
   void SetResponseMessageHeader(ThriftMessageHeader&& response_message_header);
 

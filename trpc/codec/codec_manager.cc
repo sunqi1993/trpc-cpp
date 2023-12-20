@@ -17,6 +17,10 @@
 #include "trpc/codec/trpc/trpc_client_codec.h"
 #include "trpc/codec/trpc/trpc_server_codec.h"
 
+// codec thrift
+#include "trpc/codec/thrift/thrift_server_codec.h"
+#include "trpc/codec/thrift/thrift_client_codec.h"
+
 // codec redis
 #include "trpc/codec/redis/redis_client_codec.h"
 
@@ -54,6 +58,10 @@ bool Init() {
   ret = InitCodecPlugins<TrpcClientCodec>();
   TRPC_ASSERT(ret);
 
+  ret = InitCodecPlugins<ThriftServerCodec>();
+  TRPC_ASSERT(ret);
+  ret = InitCodecPlugins<ThriftClientCodec>();
+  TRPC_ASSERT(ret);
   // trpc_http
   // ret = InitCodecPlugins<TrpcHttpServerCodec>();
   // TRPC_ASSERT(ret);

@@ -19,6 +19,7 @@
 #include "google/protobuf/message.h"
 #include "rapidjson/document.h"
 
+#include "trpc/codec/thrift/rpc_thrift/rpc_thrift_idl.h"
 #include "trpc/codec/trpc/trpc.pb.h"
 #include "trpc/compressor/trpc_compressor.h"
 #include "trpc/serialization/serialization_factory.h"
@@ -210,6 +211,8 @@ class UnaryRpcMethodHandler : public RpcMethodHandlerInterface {
       type = serialization::kNonContiguousBufferNoop;
     } else if constexpr (std::is_convertible_v<RequestType*, std::string*>) {
       type = serialization::kStringNoop;
+    } else if constexpr (std::is_convertible_v<RequestType*, ::trpc::ThriftIDLMessage*>) {
+      type = serialization::kThrift;
     } else {
       return false;
     }
@@ -229,7 +232,9 @@ class UnaryRpcMethodHandler : public RpcMethodHandlerInterface {
       type = serialization::kNonContiguousBufferNoop;
     } else if constexpr (std::is_convertible_v<RequestType*, std::string*>) {
       type = serialization::kStringNoop;
-    } else {
+    } else if constexpr (std::is_convertible_v<RequestType*, trpc::ThriftIDLMessage*>) {
+      type = serialization::kThrift;
+    }else {
       return false;
     }
 

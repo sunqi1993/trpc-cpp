@@ -57,9 +57,9 @@ ProtocolPtr ThriftClientCodec::CreateResponsePtr() {
 
 bool ThriftClientCodec::Deserialize(const ClientContextPtr& context, NoncontiguousBuffer* buffer,
                                     void* body) {
-  serialization::SerializationType serialization_type = context->GetEncodeType();
+  serialization::SerializationType serialization_type = context->GetRspEncodeType();
   auto* serialization_factory = serialization::SerializationFactory::GetInstance();
-  if (TRPC_UNLIKELY(serialization_type >= serialization_factory->GetMaxSize()) ||
+  if (TRPC_UNLIKELY(serialization_type >= trpc::serialization::kMaxType) ||
       serialization_factory->Get(serialization_type) == nullptr) {
     std::string error_msg = "not support deserialization_type:";
     error_msg += std::to_string(serialization_type);
@@ -71,7 +71,7 @@ bool ThriftClientCodec::Deserialize(const ClientContextPtr& context, Noncontiguo
     return false;
   }
 
-  serialization::DataType data_type = context->GetEncodeDataType();
+  serialization::DataType data_type = context->GetRspEncodeDataType();
   auto deserialize_success =
       serialization_factory->Get(serialization_type)->Deserialize(buffer, data_type, body);
   if (TRPC_UNLIKELY(!deserialize_success)) {
@@ -84,9 +84,9 @@ bool ThriftClientCodec::Deserialize(const ClientContextPtr& context, Noncontiguo
 
 bool ThriftClientCodec::Serialize(const ClientContextPtr& context, void* body,
                                   NoncontiguousBuffer* buffer) {
-  serialization::SerializationType serialization_type = context->GetEncodeType();
+  serialization::SerializationType serialization_type = context->GetReqEncodeType();
   auto* serialization_factory = serialization::SerializationFactory::GetInstance();
-  if (TRPC_UNLIKELY(serialization_type >= serialization_factory->GetMaxSize()) ||
+  if (TRPC_UNLIKELY(serialization_type >= trpc::serialization::kMaxType) ||
       serialization_factory->Get(serialization_type) == nullptr) {
     Status status{GetDefaultClientRetCode(codec::ClientRetCode::ENCODE_ERROR), 0,
                   "unsupported serialization type: " + std::to_string(serialization_type)};
@@ -95,7 +95,7 @@ bool ThriftClientCodec::Serialize(const ClientContextPtr& context, void* body,
     return false;
   }
 
-  serialization::DataType data_type = context->GetEncodeDataType();
+  serialization::DataType data_type = context->GetReqEncodeDataType();
   auto serialize_success =
       serialization_factory->Get(serialization_type)->Serialize(data_type, body, buffer);
   if (TRPC_UNLIKELY(!serialize_success)) {

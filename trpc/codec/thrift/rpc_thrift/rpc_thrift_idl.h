@@ -283,6 +283,8 @@ class ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kStruct), void, voi
 
       if (field_type == codec::ToUType(ThriftDataType::kStop)) return true;
 
+      if (field_type == codec::ToUType(ThriftDataType::kStruct)) continue; 
+
       while (it != st->elements->cend() && it->field_id < field_id) ++it;
 
       if (it != st->elements->cend() && it->field_id == field_id &&

@@ -655,7 +655,8 @@ public:
 		std::stringstream ss;
 		for(int i=0;i<rpcs.size();i++){
 			auto& rpc=rpcs[i];
-			std::string v="\"/"+ service + "/" + rpc.method_name + "\"";
+			// std::string v="\"/"+ service + "/" + rpc.method_name + "\"";
+			std::string v="\"" + rpc.method_name + "\"";
 			methods.push_back(v);
 			ss << v;
 			if(i!=rpcs.size()-1) ss << ",";                                

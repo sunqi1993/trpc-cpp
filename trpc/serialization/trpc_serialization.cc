@@ -20,6 +20,7 @@
 #include "trpc/serialization/noop/noop_serialization.h"
 #include "trpc/serialization/pb/pb_serialization.h"
 #include "trpc/serialization/serialization_factory.h"
+#include "trpc/serialization/thrift/thrift_serialization.h"
 
 namespace trpc::serialization {
 
@@ -38,6 +39,8 @@ bool Init() {
   // noop
   TRPC_ASSERT(factory->Register(trpc::MakeRefCounted<NoopSerialization>()));
 
+  // thrift
+  TRPC_ASSERT(factory->Register(trpc::MakeRefCounted<ThriftSerialization>()));
   return true;
 }
 

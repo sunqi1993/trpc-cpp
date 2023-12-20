@@ -37,7 +37,8 @@ bool ThriftServerCodec::ZeroCopyDecode(const ServerContextPtr& context, std::any
   if (!ret) {
     context->SetResponseWhenDecodeFail(false);
   }
-
+  context->SetReqEncodeType(serialization::kThriftType);
+  context->SetRspEncodeType(serialization::kThriftType);
   return ret;
 }
 

@@ -1,6 +1,6 @@
 .vscode/
 .idea/
-
+.cache/
 bazel-*
 *.swp
 *.o

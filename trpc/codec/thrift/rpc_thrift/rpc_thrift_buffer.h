@@ -9,11 +9,14 @@
 #define TRPC_NTOHLL(x) ((((uint64_t)ntohl((x)&0xFFFFFFFF)) << 32) + ntohl((x) >> 32))
 #endif
 
+#include <cstdint>
+
 #include <stdint.h>
 #include <string.h>
 
 #include <string>
 
+#include "rpc_thrift_enum.h"
 #include "trpc/codec/codec_helper.h"
 #include "trpc/codec/thrift/rpc_thrift/rpc_thrift_enum.h"
 #include "trpc/util/buffer/buffer.h"
@@ -189,6 +192,7 @@ inline uint32_t ThriftBuffer::WriteU64(uint64_t val, bool need_calculate_crc) {
 }
 
 inline uint32_t ThriftBuffer::WriteFieldBegin(int8_t field_type, int16_t field_id) {
+  if(field_type == ThriftDataType::kStruct) return 0;
   uint32_t result = WriteI08(field_type);
   result += WriteI16(field_id);
   return result;
