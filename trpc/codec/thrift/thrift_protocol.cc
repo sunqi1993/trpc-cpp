@@ -100,7 +100,7 @@ bool ThriftRequestProtocol::ZeroCopyEncode(NoncontiguousBuffer& buff) {
   // 1. calculate frame size
   constexpr int kFramePrefixSize = 12;
   message_header.frame_size =
-      static_cast<int32_t>(kFramePrefixSize + message_header.function_name.size() + struct_body.ByteSize());
+      static_cast<int32_t>(kFramePrefixSize + message_header.function_name.size() + struct_body.ByteSize() + 4);
   if (thrift_buffer.WriteI32(message_header.frame_size) != ThriftMessageHeader::kPrefixLength) {
     return false;
   }

@@ -33,6 +33,7 @@
 #include "trpc/util/flatbuffers/message_fbs.h"
 #include "trpc/util/log/logging.h"
 #include "trpc/util/time.h"
+#include "trpc/codec/thrift/rpc_thrift/rpc_thrift_idl.h"
 
 namespace trpc {
 
@@ -116,6 +117,9 @@ class RpcServiceProxy : public ServiceProxy {
     } else if constexpr (std::is_convertible_v<Message*, NoncontiguousBuffer*>) {
       data_type = serialization::kNonContiguousBufferNoop;
       encode_type = serialization::kNoopType;
+    } else if constexpr (std::is_convertible_v<Message*, trpc::ThriftIDLMessage*>) {
+      data_type = serialization::kThrift;
+      encode_type = serialization::kThriftType;
     } else {
       return false;
     }

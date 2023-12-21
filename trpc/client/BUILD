@@ -100,6 +100,7 @@ cc_library(
         "//trpc/util/string:string_util",
         "//trpc/util/buffer:noncontiguous_buffer",
         "//trpc/util:domain_util",
+        "//trpc/codec/thrift/rpc_thrift:rpc_thrift_idl",
     ] + select({
         "//trpc:include_ssl": [
             "//trpc/transport/common:ssl_helper",
