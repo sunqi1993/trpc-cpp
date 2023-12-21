@@ -110,7 +110,9 @@ bool ThriftRequestProtocol::ZeroCopyEncode(NoncontiguousBuffer& buff) {
                                   message_header.sequence_id, message_header.is_strict);
 
   // 3. write response body
+  thrift_buffer.WriteFieldBegin(12, 0);
   message_builder.Append(std::move(struct_body));
+  thrift_buffer.WriteI08(0);
   buff = message_builder.DestructiveGet();
 
   return true;
