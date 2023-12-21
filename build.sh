@@ -1,4 +1,4 @@
 #! /bin/bash
 
-bazel build //trpc/... \
+bazel build //examples/helloworld/... \
     --define trpc_include_codec_thrift=true \

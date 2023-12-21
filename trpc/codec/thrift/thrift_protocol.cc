@@ -110,7 +110,7 @@ bool ThriftRequestProtocol::ZeroCopyEncode(NoncontiguousBuffer& buff) {
                                   message_header.sequence_id, message_header.is_strict);
 
   // 3. write response body
-    message_builder.Append(std::move(struct_body));
+  message_builder.Append(std::move(struct_body));
   buff = message_builder.DestructiveGet();
 
   return true;
@@ -161,9 +161,10 @@ bool ThriftResponseProtocol::ZeroCopyEncode(NoncontiguousBuffer& buff) {
   NoncontiguousBufferBuilder message_builder;
   ThriftBuffer thrift_buffer(&message_builder);
   // 1. calculate frame size
+  // TODO 内存计量
   constexpr int kFramePrefixSize = 12;
   message_header.frame_size =
-      static_cast<int32_t>(kFramePrefixSize + message_header.function_name.size() + struct_body.ByteSize());
+      static_cast<int32_t>(kFramePrefixSize + message_header.function_name.size() + struct_body.ByteSize()+3+1);
   if (thrift_buffer.WriteI32(message_header.frame_size) != ThriftMessageHeader::kPrefixLength) {
     return false;
   }
@@ -173,8 +174,10 @@ bool ThriftResponseProtocol::ZeroCopyEncode(NoncontiguousBuffer& buff) {
                                   message_header.sequence_id, message_header.is_strict);
 
   // 3. write response body
+  
   thrift_buffer.WriteFieldBegin(12, 0);
   message_builder.Append(std::move(struct_body));
+  thrift_buffer.WriteI08(0);
   buff = message_builder.DestructiveGet();
 
   return true;
