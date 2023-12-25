@@ -1,6 +1,7 @@
 // Copyright (c) 2021, Tencent Inc.
 // All rights reserved.
 
+#include <cstdint>
 #ifdef BUILD_INCLUDE_CODEC_THRIFT
 
 #include "trpc/codec/thrift/thrift_protocol.h"
@@ -87,7 +88,7 @@ bool ThriftRequestProtocol::ZeroCopyDecode(NoncontiguousBuffer& buff) {
   // 2. read message head
   thrift_buffer.ReadMessageBegin(message_header.function_name, message_header.message_type,
                                  message_header.sequence_id, message_header.is_strict);
-
+  buff.Skip(3);
   // 3. request struct body
   struct_body = std::move(buff);
 
@@ -110,7 +111,7 @@ bool ThriftRequestProtocol::ZeroCopyEncode(NoncontiguousBuffer& buff) {
                                   message_header.sequence_id, message_header.is_strict);
 
   // 3. write response body
-  thrift_buffer.WriteFieldBegin(12, 0);
+  thrift_buffer.WriteFieldBegin(12, 1);
   message_builder.Append(std::move(struct_body));
   thrift_buffer.WriteI08(0);
   buff = message_builder.DestructiveGet();
@@ -199,6 +200,8 @@ bool ThriftResponseProtocol::ZeroCopyDecode(NoncontiguousBuffer& buff) {
   thrift_buffer.ReadMessageBegin(message_header.function_name, message_header.message_type,
                                  message_header.sequence_id, message_header.is_strict);
 
+  // 3. read response body
+  buff.Skip(3); // 1byte + 2 bytes
   // 3. request struct body
   struct_body = std::move(buff);
 

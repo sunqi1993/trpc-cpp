@@ -86,12 +86,10 @@ class ThriftDescriptorImpl : public ThriftDescriptor {
 };
 
 template <class T, class VALIMPL>
-class ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kList), void, VALIMPL>
-    : public ThriftDescriptor {
+class ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kList), void, VALIMPL> : public ThriftDescriptor {
  public:
   static const ThriftDescriptor* GetInstance() {
-    static const ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kList), void, VALIMPL>
-        kInstance;
+    static const ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kList), void, VALIMPL> kInstance;
 
     return &kInstance;
   }
@@ -131,20 +129,17 @@ class ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kList), void, VALIM
 
  private:
   ThriftDescriptorImpl()
-      : ThriftDescriptor(
-            ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kList), void, VALIMPL>::Read,
-            ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kList), void, VALIMPL>::Write) {
+      : ThriftDescriptor(ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kList), void, VALIMPL>::Read,
+                         ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kList), void, VALIMPL>::Write) {
     this->data_type = codec::ToUType(ThriftDataType::kList);
   }
 };
 
 template <class T, class VALIMPL>
-class ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kSet), void, VALIMPL>
-    : public ThriftDescriptor {
+class ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kSet), void, VALIMPL> : public ThriftDescriptor {
  public:
   static const ThriftDescriptor* GetInstance() {
-    static const ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kSet), void, VALIMPL>
-        kInstance;
+    static const ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kSet), void, VALIMPL> kInstance;
 
     return &kInstance;
   }
@@ -186,20 +181,17 @@ class ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kSet), void, VALIMP
 
  private:
   ThriftDescriptorImpl()
-      : ThriftDescriptor(
-            ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kSet), void, VALIMPL>::Read,
-            ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kSet), void, VALIMPL>::Write) {
+      : ThriftDescriptor(ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kSet), void, VALIMPL>::Read,
+                         ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kSet), void, VALIMPL>::Write) {
     this->data_type = codec::ToUType(ThriftDataType::kSet);
   }
 };
 
 template <class T, class KEYIMPL, class VALIMPL>
-class ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kMap), KEYIMPL, VALIMPL>
-    : public ThriftDescriptor {
+class ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kMap), KEYIMPL, VALIMPL> : public ThriftDescriptor {
  public:
   static const ThriftDescriptor* GetInstance() {
-    static const ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kMap), KEYIMPL, VALIMPL>
-        kInstance;
+    static const ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kMap), KEYIMPL, VALIMPL> kInstance;
 
     return &kInstance;
   }
@@ -251,21 +243,17 @@ class ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kMap), KEYIMPL, VAL
 
  private:
   ThriftDescriptorImpl()
-      : ThriftDescriptor(
-            ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kMap), KEYIMPL, VALIMPL>::Read,
-            ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kMap), KEYIMPL,
-                                 VALIMPL>::Write) {
+      : ThriftDescriptor(ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kMap), KEYIMPL, VALIMPL>::Read,
+                         ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kMap), KEYIMPL, VALIMPL>::Write) {
     this->data_type = codec::ToUType(ThriftDataType::kMap);
   }
 };
 
 template <class T>
-class ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kStruct), void, void>
-    : public ThriftDescriptor {
+class ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kStruct), void, void> : public ThriftDescriptor {
  public:
   static const ThriftDescriptor* GetInstance() {
-    static const ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kStruct), void, void>
-        kInstance;
+    static const ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kStruct), void, void> kInstance;
 
     return &kInstance;
   }
@@ -283,12 +271,9 @@ class ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kStruct), void, voi
 
       if (field_type == codec::ToUType(ThriftDataType::kStop)) return true;
 
-      if (field_type == codec::ToUType(ThriftDataType::kStruct)) continue; 
-
       while (it != st->elements->cend() && it->field_id < field_id) ++it;
 
-      if (it != st->elements->cend() && it->field_id == field_id &&
-          it->desc->data_type == field_type) {
+      if (it != st->elements->cend() && it->field_id == field_id && it->desc->data_type == field_type) {
         if (it->required_state != kThriftStructFieldRequired)
           *(reinterpret_cast<bool*>(base + it->isset_offset)) = true;
 
@@ -319,56 +304,55 @@ class ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kStruct), void, voi
 
  private:
   ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kStruct), void, void>()
-      : ThriftDescriptor(
-            ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kStruct), void, void>::Read,
-            ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kStruct), void, void>::Write) {
+      : ThriftDescriptor(ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kStruct), void, void>::Read,
+                         ThriftDescriptorImpl<T, codec::ToUType(ThriftDataType::kStruct), void, void>::Write) {
     this->data_type = codec::ToUType(ThriftDataType::kStruct);
   }
 };
 
 template <>
-inline bool ThriftDescriptorImpl<bool, codec::ToUType(ThriftDataType::kBool), void, void>::Read(
-    ThriftBuffer* buffer, void* data) {
+inline bool ThriftDescriptorImpl<bool, codec::ToUType(ThriftDataType::kBool), void, void>::Read(ThriftBuffer* buffer,
+                                                                                                void* data) {
   int8_t* p = static_cast<int8_t*>(data);
 
   return buffer->ReadI08(*p);
 }
 
 template <>
-inline bool ThriftDescriptorImpl<int8_t, codec::ToUType(ThriftDataType::kI08), void, void>::Read(
-    ThriftBuffer* buffer, void* data) {
+inline bool ThriftDescriptorImpl<int8_t, codec::ToUType(ThriftDataType::kI08), void, void>::Read(ThriftBuffer* buffer,
+                                                                                                 void* data) {
   int8_t* p = static_cast<int8_t*>(data);
 
   return buffer->ReadI08(*p);
 }
 
 template <>
-inline bool ThriftDescriptorImpl<int16_t, codec::ToUType(ThriftDataType::kI16), void, void>::Read(
-    ThriftBuffer* buffer, void* data) {
+inline bool ThriftDescriptorImpl<int16_t, codec::ToUType(ThriftDataType::kI16), void, void>::Read(ThriftBuffer* buffer,
+                                                                                                  void* data) {
   int16_t* p = static_cast<int16_t*>(data);
 
   return buffer->ReadI16(*p);
 }
 
 template <>
-inline bool ThriftDescriptorImpl<int32_t, codec::ToUType(ThriftDataType::kI32), void, void>::Read(
-    ThriftBuffer* buffer, void* data) {
+inline bool ThriftDescriptorImpl<int32_t, codec::ToUType(ThriftDataType::kI32), void, void>::Read(ThriftBuffer* buffer,
+                                                                                                  void* data) {
   int32_t* p = static_cast<int32_t*>(data);
 
   return buffer->ReadI32(*p);
 }
 
 template <>
-inline bool ThriftDescriptorImpl<int64_t, codec::ToUType(ThriftDataType::kI64), void, void>::Read(
-    ThriftBuffer* buffer, void* data) {
+inline bool ThriftDescriptorImpl<int64_t, codec::ToUType(ThriftDataType::kI64), void, void>::Read(ThriftBuffer* buffer,
+                                                                                                  void* data) {
   int64_t* p = static_cast<int64_t*>(data);
 
   return buffer->ReadI64(*p);
 }
 
 template <>
-inline bool ThriftDescriptorImpl<uint64_t, codec::ToUType(ThriftDataType::kU64), void, void>::Read(
-    ThriftBuffer* buffer, void* data) {
+inline bool ThriftDescriptorImpl<uint64_t, codec::ToUType(ThriftDataType::kU64), void, void>::Read(ThriftBuffer* buffer,
+                                                                                                   void* data) {
   uint64_t* p = static_cast<uint64_t*>(data);
 
   return buffer->ReadU64(*p);
@@ -383,104 +367,104 @@ inline bool ThriftDescriptorImpl<double, codec::ToUType(ThriftDataType::kDouble)
 }
 
 template <>
-inline bool ThriftDescriptorImpl<std::string, codec::ToUType(ThriftDataType::kString), void,
-                                 void>::Read(ThriftBuffer* buffer, void* data) {
+inline bool ThriftDescriptorImpl<std::string, codec::ToUType(ThriftDataType::kString), void, void>::Read(
+    ThriftBuffer* buffer, void* data) {
   std::string* p = static_cast<std::string*>(data);
 
   return buffer->ReadString(*p);
 }
 
 template <>
-inline bool ThriftDescriptorImpl<std::string, codec::ToUType(ThriftDataType::kUtf8), void,
-                                 void>::Read(ThriftBuffer* buffer, void* data) {
+inline bool ThriftDescriptorImpl<std::string, codec::ToUType(ThriftDataType::kUtf8), void, void>::Read(
+    ThriftBuffer* buffer, void* data) {
   std::string* p = static_cast<std::string*>(data);
 
   return buffer->ReadString(*p);
 }
 
 template <>
-inline bool ThriftDescriptorImpl<std::string, codec::ToUType(ThriftDataType::kUtf16), void,
-                                 void>::Read(ThriftBuffer* buffer, void* data) {
+inline bool ThriftDescriptorImpl<std::string, codec::ToUType(ThriftDataType::kUtf16), void, void>::Read(
+    ThriftBuffer* buffer, void* data) {
   std::string* p = static_cast<std::string*>(data);
 
   return buffer->ReadString(*p);
 }
 
 template <>
-inline uint32_t ThriftDescriptorImpl<bool, codec::ToUType(ThriftDataType::kBool), void,
-                                     void>::Write(const void* data, ThriftBuffer* buffer) {
+inline uint32_t ThriftDescriptorImpl<bool, codec::ToUType(ThriftDataType::kBool), void, void>::Write(
+    const void* data, ThriftBuffer* buffer) {
   const int8_t* p = static_cast<const int8_t*>(data);
 
   return buffer->WriteI08(*p);
 }
 
 template <>
-inline uint32_t ThriftDescriptorImpl<int8_t, codec::ToUType(ThriftDataType::kI08), void,
-                                     void>::Write(const void* data, ThriftBuffer* buffer) {
+inline uint32_t ThriftDescriptorImpl<int8_t, codec::ToUType(ThriftDataType::kI08), void, void>::Write(
+    const void* data, ThriftBuffer* buffer) {
   const int8_t* p = static_cast<const int8_t*>(data);
 
   return buffer->WriteI08(*p);
 }
 
 template <>
-inline uint32_t ThriftDescriptorImpl<int16_t, codec::ToUType(ThriftDataType::kI16), void,
-                                     void>::Write(const void* data, ThriftBuffer* buffer) {
+inline uint32_t ThriftDescriptorImpl<int16_t, codec::ToUType(ThriftDataType::kI16), void, void>::Write(
+    const void* data, ThriftBuffer* buffer) {
   const int16_t* p = static_cast<const int16_t*>(data);
 
   return buffer->WriteI16(*p);
 }
 
 template <>
-inline uint32_t ThriftDescriptorImpl<int32_t, codec::ToUType(ThriftDataType::kI32), void,
-                                     void>::Write(const void* data, ThriftBuffer* buffer) {
+inline uint32_t ThriftDescriptorImpl<int32_t, codec::ToUType(ThriftDataType::kI32), void, void>::Write(
+    const void* data, ThriftBuffer* buffer) {
   const int32_t* p = static_cast<const int32_t*>(data);
 
   return buffer->WriteI32(*p);
 }
 
 template <>
-inline uint32_t ThriftDescriptorImpl<int64_t, codec::ToUType(ThriftDataType::kI64), void,
-                                     void>::Write(const void* data, ThriftBuffer* buffer) {
+inline uint32_t ThriftDescriptorImpl<int64_t, codec::ToUType(ThriftDataType::kI64), void, void>::Write(
+    const void* data, ThriftBuffer* buffer) {
   const int64_t* p = static_cast<const int64_t*>(data);
 
   return buffer->WriteI64(*p);
 }
 
 template <>
-inline uint32_t ThriftDescriptorImpl<uint64_t, codec::ToUType(ThriftDataType::kU64), void,
-                                     void>::Write(const void* data, ThriftBuffer* buffer) {
+inline uint32_t ThriftDescriptorImpl<uint64_t, codec::ToUType(ThriftDataType::kU64), void, void>::Write(
+    const void* data, ThriftBuffer* buffer) {
   const uint64_t* p = static_cast<const uint64_t*>(data);
 
   return buffer->WriteU64(*p);
 }
 
 template <>
-inline uint32_t ThriftDescriptorImpl<double, codec::ToUType(ThriftDataType::kDouble), void,
-                                     void>::Write(const void* data, ThriftBuffer* buffer) {
+inline uint32_t ThriftDescriptorImpl<double, codec::ToUType(ThriftDataType::kDouble), void, void>::Write(
+    const void* data, ThriftBuffer* buffer) {
   const uint64_t* p = static_cast<const uint64_t*>(data);
 
   return buffer->WriteU64(*p);
 }
 
 template <>
-inline uint32_t ThriftDescriptorImpl<std::string, codec::ToUType(ThriftDataType::kString), void,
-                                     void>::Write(const void* data, ThriftBuffer* buffer) {
+inline uint32_t ThriftDescriptorImpl<std::string, codec::ToUType(ThriftDataType::kString), void, void>::Write(
+    const void* data, ThriftBuffer* buffer) {
   const std::string* p = static_cast<const std::string*>(data);
 
   return buffer->WriteString(*p);
 }
 
 template <>
-inline uint32_t ThriftDescriptorImpl<std::string, codec::ToUType(ThriftDataType::kUtf8), void,
-                                     void>::Write(const void* data, ThriftBuffer* buffer) {
+inline uint32_t ThriftDescriptorImpl<std::string, codec::ToUType(ThriftDataType::kUtf8), void, void>::Write(
+    const void* data, ThriftBuffer* buffer) {
   const std::string* p = static_cast<const std::string*>(data);
 
   return buffer->WriteString(*p);
 }
 
 template <>
-inline uint32_t ThriftDescriptorImpl<std::string, codec::ToUType(ThriftDataType::kUtf16), void,
-                                     void>::Write(const void* data, ThriftBuffer* buffer) {
+inline uint32_t ThriftDescriptorImpl<std::string, codec::ToUType(ThriftDataType::kUtf16), void, void>::Write(
+    const void* data, ThriftBuffer* buffer) {
   const std::string* p = static_cast<const std::string*>(data);
 
   return buffer->WriteString(*p);
