@@ -177,5 +177,7 @@ cc_library(
         "//trpc/naming/direct:selector_direct",
         "//trpc/naming/domain:domain_selector_filter",
         "//trpc/naming/domain:selector_domain",
+        "//trpc/naming/byte_consul:selector_byteconsul",
+        "//trpc/naming/byte_consul:selector_byteconsul_filter",
     ],
 )

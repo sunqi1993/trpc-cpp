@@ -21,6 +21,8 @@
 #include "trpc/naming/direct/selector_direct.h"
 #include "trpc/naming/domain/domain_selector_filter.h"
 #include "trpc/naming/domain/selector_domain.h"
+#include "trpc/naming/byte_consul/selector_byteconsul.h"
+#include "trpc/naming/byte_consul/byteconsul_selector_filter.h"
 #include "trpc/naming/limiter.h"
 #include "trpc/naming/limiter_factory.h"
 #include "trpc/naming/load_balance_factory.h"
@@ -46,6 +48,9 @@ void RegisterInnerSelector() {
   SelectorPtr direct_selector = MakeRefCounted<SelectorDirect>(polling_load_balance);
   SelectorFactory::GetInstance()->Register(direct_selector);
 
+  SelectorPtr byteconsul_selector = MakeRefCounted<SelectorByteConsul>(polling_load_balance);
+  SelectorFactory::GetInstance()->Register(byteconsul_selector);
+
   // Because other plugins are registered using the direct/domain selector filter,
   // so direct and domain selector filter need to be registered when naming module is initialized
   MessageClientFilterPtr direct_selector_filter = std::make_shared<DirectSelectorFilter>();
@@ -55,6 +60,10 @@ void RegisterInnerSelector() {
   MessageClientFilterPtr domain_selector_filter = std::make_shared<DomainSelectorFilter>();
   domain_selector_filter->Init();
   FilterManager::GetInstance()->AddMessageClientFilter(domain_selector_filter);
+
+  MessageClientFilterPtr byteconsul_selector_filter = std::make_shared<ByteConsulSelectorFilter>();
+  byteconsul_selector_filter->Init();
+  FilterManager::GetInstance()->AddMessageClientFilter(byteconsul_selector_filter);
 }
 
 // Stop the Selector thread inside trpc: currently contains domain and direct plugins.
