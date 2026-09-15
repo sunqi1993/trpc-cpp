@@ -33,7 +33,8 @@ uint32_t GetFiberStackSize();
 /// @brief Set whether memory page protection is applied to memory blocks allocated through mmap
 void SetFiberStackEnableGuardPage(bool flag);
 
-/// @brief Set the number of pooled memory stacks allocated through mmap used by fibers
+/// @brief Set the number of pooled memory stacks allocated through mmap used by fibers.
+/// Must be called before the first fiber stack allocation. Repeating the frozen value is allowed.
 void SetFiberPoolNumByMmap(uint32_t fiber_pool_num_by_mmap);
 
 /// @brief Enable debug fiber using gdb

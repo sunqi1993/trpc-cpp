@@ -143,6 +143,28 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "stack_allocator_small_pool_test",
+    srcs = ["stack_allocator_small_pool_test.cc"],
+    deps = [
+        ":stack_allocator_impl",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+[
+    cc_test(
+        name = "stack_allocator_pool_limit_{}_test".format(pool_size),
+        srcs = ["stack_allocator_pool_limit_test.cc"],
+        defines = ["TRPC_TEST_POOL_SIZE={}".format(pool_size)],
+        deps = [
+            ":stack_allocator_impl",
+            "@com_google_googletest//:gtest_main",
+        ],
+    )
+    for pool_size in [0, 1, 1024, 1025]
+]
+
 cc_library(
     name = "testing",
     hdrs = ["testing.h"],

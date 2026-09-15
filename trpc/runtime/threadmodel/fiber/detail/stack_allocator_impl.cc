@@ -22,6 +22,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <cstdlib>
 #include <thread>
 
@@ -38,6 +39,8 @@ static uint32_t fiber_stack_size = 131072;
 static bool fiber_stack_enable_guard_page = true;
 static uint32_t max_fiber_num_by_mmap = 30 * 1024;
 static bool enable_gdb_debug = false;
+static std::mutex fiber_pool_config_mutex;
+static bool fiber_pool_config_frozen = false;
 
 const uint32_t kPageSize = getpagesize();
 
@@ -150,6 +153,12 @@ struct StackRegistry {
 
 // End of source codes that are from flare.
 
+uint32_t FreezeFiberPoolConfig() {
+  std::scoped_lock lock(fiber_pool_config_mutex);
+  fiber_pool_config_frozen = true;
+  return max_fiber_num_by_mmap;
+}
+
 void SetFiberPoolCreateWay(bool use_mmap) {
   fiber_use_mmap = use_mmap;
 }
@@ -171,6 +180,13 @@ void SetFiberStackEnableGuardPage(bool flag) {
 }
 
 void SetFiberPoolNumByMmap(uint32_t fiber_pool_num_by_mmap) {
+  std::scoped_lock lock(fiber_pool_config_mutex);
+  TRPC_CHECK(!fiber_pool_config_frozen ||
+                 fiber_pool_num_by_mmap == max_fiber_num_by_mmap,
+             "Fiber mmap pool size must be set before the first fiber stack allocation.");
+  if (fiber_pool_config_frozen) {
+    return;
+  }
   max_fiber_num_by_mmap = fiber_pool_num_by_mmap;
 }
 
@@ -337,6 +353,7 @@ struct alignas(64) FiberStack {
 struct alignas(64) Block {
   FiberStack* fiber_stacks[kFiberStackNum] = {nullptr};
   size_t idx = 0;
+  size_t size = 0;
 };
 
 struct alignas(64) BlockChunk {
@@ -355,7 +372,6 @@ struct FreekFiberStacks {
 class alignas(64) GlobalPool {
  public:
   struct FiberStackManager {
-    size_t free_num = 0;
     std::vector<FreekFiberStacks> free_fiber_stack_vec;
   };
 
@@ -366,25 +382,33 @@ class alignas(64) GlobalPool {
 
  public:
   GlobalPool() noexcept {
-    size_t block_chunks_size = max_fiber_num_by_mmap / (kBlockNum * kFiberStackNum) + 1;
-    block_manager_.block_chunks.resize(block_chunks_size * 2);
+    max_fiber_num_by_mmap_ = FreezeFiberPoolConfig();
+
+    const size_t stacks_per_chunk = kBlockNum * kFiberStackNum;
+    const size_t block_chunks_size = max_fiber_num_by_mmap_ == 0
+                                         ? 0
+                                         : (max_fiber_num_by_mmap_ - 1) / stacks_per_chunk + 1;
+    block_manager_.block_chunks.resize(block_chunks_size);
     block_manager_.available_index = 0;
 
-    size_t free_fiber_stack_vec_size = max_fiber_num_by_mmap / kFreeFiberStackNum + 1;
-    free_fiber_stack_manager_.free_fiber_stack_vec.resize(free_fiber_stack_vec_size * 2);
-    free_fiber_stack_manager_.free_num = 0;
+    const size_t expected_free_list_count = max_fiber_num_by_mmap_ == 0
+                                                ? 0
+                                                : (max_fiber_num_by_mmap_ - 1) /
+                                                          kFreeFiberStackNum +
+                                                      1;
+    free_fiber_stack_manager_.free_fiber_stack_vec.reserve(expected_free_list_count);
 
-    if (!NewBlockChunk()) {
+    if (max_fiber_num_by_mmap_ != 0 && !NewBlockChunk()) {
       TRPC_LOG_ERROR("GlobalPool NewBlockChunk failed.");
       exit(-1);
     }
   }
 
   ~GlobalPool() {
-    for (uint32_t i = 0; i < block_manager_.available_index; ++i) {
-      for (uint32_t j = 0; j < block_manager_.block_chunks[i].alloc_idx; ++j) {
-        for (uint32_t k = 0; k < kFiberStackNum; ++k) {
-          void* stack_ptr = static_cast<void*>(block_manager_.block_chunks[i].blocks[j].fiber_stacks[k]);
+    for (auto& block_chunk : block_manager_.block_chunks) {
+      for (uint32_t j = 0; j < block_chunk.alloc_idx; ++j) {
+        for (uint32_t k = 0; k < block_chunk.blocks[j].size; ++k) {
+          void* stack_ptr = static_cast<void*>(block_chunk.blocks[j].fiber_stacks[k]);
           if (stack_ptr != nullptr) {
             DeallocateFiberStack(stack_ptr, true);
           }
@@ -408,7 +432,10 @@ class alignas(64) GlobalPool {
 
   bool NewBlock() noexcept;
 
+  bool AllocateBlock(Block* block) noexcept;
+
  private:
+  size_t max_fiber_num_by_mmap_ = 0;
   size_t alloc_fiber_stack_num_ = 0;
   BlockManager block_manager_;
   std::mutex block_mutex_;
@@ -421,8 +448,9 @@ class alignas(64) GlobalPool {
 void GlobalPool::PushFreeFiberStacks(FreekFiberStacks& free_fiber_stacks) noexcept {
   {
     std::unique_lock lock(free_fiber_stack_mutex_);
-    // record the head pointer of the free list in the free_manager
-    free_fiber_stack_manager_.free_fiber_stack_vec[free_fiber_stack_manager_.free_num++] = free_fiber_stacks;
+    TRPC_CHECK_LT(free_fiber_stack_manager_.free_fiber_stack_vec.size(),
+                  max_fiber_num_by_mmap_);
+    free_fiber_stack_manager_.free_fiber_stack_vec.push_back(free_fiber_stacks);
   }
   // reset the free list in the Local Pool
   free_fiber_stacks.head = nullptr;
@@ -432,8 +460,9 @@ void GlobalPool::PushFreeFiberStacks(FreekFiberStacks& free_fiber_stacks) noexce
 // get free fiber stack from Global Pool
 bool GlobalPool::PopFreeFiberStacks(FreekFiberStacks& free_fiber_stacks) noexcept {
   std::unique_lock lock(free_fiber_stack_mutex_);
-  if (free_fiber_stack_manager_.free_num > 0) {
-    free_fiber_stacks = free_fiber_stack_manager_.free_fiber_stack_vec[--free_fiber_stack_manager_.free_num];
+  if (!free_fiber_stack_manager_.free_fiber_stack_vec.empty()) {
+    free_fiber_stacks = free_fiber_stack_manager_.free_fiber_stack_vec.back();
+    free_fiber_stack_manager_.free_fiber_stack_vec.pop_back();
     lock.unlock();
     return true;
   }
@@ -442,62 +471,82 @@ bool GlobalPool::PopFreeFiberStacks(FreekFiberStacks& free_fiber_stacks) noexcep
 }
 
 bool GlobalPool::NewBlockChunk() noexcept {
+  if (block_manager_.available_index >= block_manager_.block_chunks.size()) {
+    return false;
+  }
   BlockChunk* new_block_chunk = &(block_manager_.block_chunks[block_manager_.available_index]);
 
   new_block_chunk->idx = 0;
-  for (uint32_t i = 0; i < kBlockNum; ++i) {
-    new_block_chunk->blocks[i].idx = 0;
-    for (uint32_t k = 0; k < kFiberStackNum; ++k) {
-      void* stack_ptr = AllocateFiberStack(true);
-      TRPC_ASSERT(stack_ptr != nullptr);
-      new_block_chunk->blocks[i].fiber_stacks[k] = static_cast<FiberStack*>(stack_ptr);
+  new_block_chunk->alloc_idx = 0;
+  while (new_block_chunk->alloc_idx < kBlockNum &&
+         alloc_fiber_stack_num_ < max_fiber_num_by_mmap_) {
+    if (!AllocateBlock(&new_block_chunk->blocks[new_block_chunk->alloc_idx])) {
+      break;
     }
+    ++new_block_chunk->alloc_idx;
   }
-
-  new_block_chunk->alloc_idx = kBlockNum;
-
+  if (new_block_chunk->alloc_idx == 0) {
+    return false;
+  }
   ++(block_manager_.available_index);
-
-  alloc_fiber_stack_num_ += kBlockNum * kFiberStackNum;
-
   return true;
 }
 
 bool GlobalPool::NewBlock() noexcept {
-  BlockChunk* new_block_chunk = &(block_manager_.block_chunks[block_manager_.available_index]);
-
-  new_block_chunk->blocks[new_block_chunk->alloc_idx].idx = 0;
-  for (uint32_t k = 0; k < kFiberStackNum; ++k) {
-    void* stack_ptr = AllocateFiberStack(true);
-    TRPC_ASSERT(stack_ptr != nullptr);
-    new_block_chunk->blocks[new_block_chunk->alloc_idx].fiber_stacks[k] =
-        static_cast<FiberStack*>(stack_ptr);
+  if (block_manager_.available_index >= block_manager_.block_chunks.size()) {
+    return false;
   }
-
+  BlockChunk* new_block_chunk = &(block_manager_.block_chunks[block_manager_.available_index]);
+  if (new_block_chunk->alloc_idx == 0) {
+    new_block_chunk->idx = 0;
+  }
+  if (new_block_chunk->alloc_idx == kBlockNum ||
+      !AllocateBlock(&new_block_chunk->blocks[new_block_chunk->alloc_idx])) {
+    return false;
+  }
   ++(new_block_chunk->alloc_idx);
-
-  alloc_fiber_stack_num_ += kFiberStackNum;
-
   return true;
+}
+
+bool GlobalPool::AllocateBlock(Block* block) noexcept {
+  const size_t stack_count = std::min(
+      kFiberStackNum, max_fiber_num_by_mmap_ - alloc_fiber_stack_num_);
+  block->idx = 0;
+  block->size = 0;
+  for (; block->size < stack_count; ++block->size) {
+    void* stack_ptr = AllocateFiberStack(true);
+    if (TRPC_UNLIKELY(stack_ptr == nullptr)) {
+      for (size_t i = 0; i < block->size; ++i) {
+        DeallocateFiberStack(block->fiber_stacks[i], true);
+        block->fiber_stacks[i] = nullptr;
+      }
+      block->size = 0;
+      return false;
+    }
+    block->fiber_stacks[block->size] = static_cast<FiberStack*>(stack_ptr);
+  }
+  alloc_fiber_stack_num_ += stack_count;
+  return stack_count != 0;
 }
 
 Block* GlobalPool::PopBlock() noexcept {
   // Check the current BlockChunk to see if there are any free Blocks
   std::unique_lock lock(block_mutex_);
-  // block_manager_.block_chunks_ is not necessarily empty
-  BlockChunk* block_chunk = &(block_manager_.block_chunks[block_manager_.available_index - 1]);
-
-  if (block_chunk->idx < block_chunk->alloc_idx) {
-    // block_chunk->idx_ corresponds to the minimum index of the Blocks that can be allocated in the BlockChunk
-    auto res_idx = block_chunk->idx++;
-    lock.unlock();
-    return &block_chunk->blocks[res_idx];
+  BlockChunk* block_chunk = nullptr;
+  if (block_manager_.available_index != 0) {
+    block_chunk = &(block_manager_.block_chunks[block_manager_.available_index - 1]);
+    if (block_chunk->idx < block_chunk->alloc_idx) {
+      // block_chunk->idx_ corresponds to the minimum index of the Blocks that can be allocated in the BlockChunk
+      auto res_idx = block_chunk->idx++;
+      lock.unlock();
+      return &block_chunk->blocks[res_idx];
+    }
   }
 
-  if (alloc_fiber_stack_num_ >= max_fiber_num_by_mmap) {
+  if (alloc_fiber_stack_num_ >= max_fiber_num_by_mmap_) {
     TRPC_FMT_INFO_EVERY_SECOND("Block Allocate {}, beyond {} limited.",
                                alloc_fiber_stack_num_,
-                               max_fiber_num_by_mmap);
+                               max_fiber_num_by_mmap_);
     return nullptr;
   }
 
@@ -507,7 +556,8 @@ Block* GlobalPool::PopBlock() noexcept {
     block_chunk = &(block_manager_.block_chunks[block_manager_.available_index]);
     // Allocate the first Block in the BlockChunk
     auto res_idx = block_chunk->idx++;
-    if (block_chunk->alloc_idx == kBlockNum) {
+    if (block_chunk->alloc_idx == kBlockNum ||
+        alloc_fiber_stack_num_ == max_fiber_num_by_mmap_) {
       ++(block_manager_.available_index);
     }
     lock.unlock();
@@ -552,7 +602,7 @@ LocalPool::LocalPool(GlobalPool* global_pool) noexcept : global_pool_(global_poo
 
 LocalPool::~LocalPool() {
   if (block_ != nullptr) {
-    while (block_->idx < kFiberStackNum) {
+    while (block_->idx < block_->size) {
       if (TRPC_UNLIKELY(free_fiber_stacks_.length == kFreeFiberStackNum)) {
         global_pool_->PushFreeFiberStacks(free_fiber_stacks_);
       }
@@ -596,7 +646,7 @@ bool LocalPool::Allocate(void** stack_ptr, bool* is_system) noexcept {
     *is_system = false;
 
     return true;
-  } else if ((block_ != nullptr) && block_->idx < kFiberStackNum) {
+  } else if ((block_ != nullptr) && block_->idx < block_->size) {
     // If the Local Pool's Block still has available space, allocate one from the Local Pool's Block
     ++GetStatistics().total_allocs_num;
     ++GetStatistics().allocs_from_tls_block;
@@ -699,10 +749,19 @@ struct FiberPrewarmResutInfo {
 };
 
 int PrewarmFiberPool(uint32_t fiber_num) {
+  if (fiber_num == 0) {
+    return 0;
+  }
+  GetLocalPool();
   int prewarm_num = 0;
 
-  if (fiber_num > max_fiber_num_by_mmap) {
-    fiber_num = max_fiber_num_by_mmap;
+  uint32_t fiber_pool_num_by_mmap;
+  {
+    std::scoped_lock lock(fiber_pool_config_mutex);
+    fiber_pool_num_by_mmap = max_fiber_num_by_mmap;
+  }
+  if (fiber_num > fiber_pool_num_by_mmap) {
+    fiber_num = fiber_pool_num_by_mmap;
   }
 
   std::vector<FiberPrewarmResutInfo> result_infos;
