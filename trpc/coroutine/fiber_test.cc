@@ -88,18 +88,32 @@ TEST(Fiber, BatchStartUseLatch) {
 TEST(Fiber, FiberYield) {
   RunAsFiber([&] {
     FiberLatch l(1);
+    std::atomic<bool> yielding_fiber_started{false};
+    std::atomic<bool> peer_ran{false};
+    std::atomic<bool> yielding_fiber_completed{false};
+    std::atomic<size_t> yield_count{0};
 
-    StartFiberDetached([&l] {
-      auto tid = std::this_thread::get_id();
-
-      while (tid == std::this_thread::get_id()) {
+    StartFiberDetached([&] {
+      yielding_fiber_started = true;
+      while (!peer_ran) {
+        ++yield_count;
         FiberYield();
       }
 
+      yielding_fiber_completed = true;
       l.CountDown();
     });
 
+    while (!yielding_fiber_started) {
+      FiberYield();
+    }
+
+    StartFiberDetached([&] { peer_ran = true; });
+
     l.Wait();
+    ASSERT_TRUE(peer_ran.load());
+    ASSERT_TRUE(yielding_fiber_completed.load());
+    ASSERT_GE(yield_count.load(), 1);
   });
 }
 

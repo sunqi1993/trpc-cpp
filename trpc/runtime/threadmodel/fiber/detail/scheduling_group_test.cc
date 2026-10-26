@@ -43,7 +43,10 @@ std::size_t GetMaxFibers() {
   std::ifstream ifs("/proc/sys/vm/max_map_count");
   std::string s;
   std::getline(ifs, s);
-  return std::min<std::size_t>(TryParse<std::size_t>(s).value_or(65530) / 2, 1048576);
+  // Keep the stress test near the traditional Linux max_map_count default.
+  // Some hosts set the limit to 1M+, which turns this into a 500K-fiber test,
+  // overflows the default ready queue, and cannot finish within the test timeout.
+  return std::min<std::size_t>(TryParse<std::size_t>(s).value_or(65530) / 2, 32768);
 }
 
 }  // namespace

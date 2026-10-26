@@ -158,6 +158,7 @@ def trpc_workspace(path_prefix = "", repo_name = "", **kwargs):
     ]
     http_archive(
         name = "com_github_jbeder_yaml_cpp",
+        patches = ["@trpc_cpp//third_party/com_github_jbeder_yaml_cpp:include-cstdint.patch"],
         sha256 = com_github_jbeder_yaml_cpp_sha256,
         strip_prefix = "yaml-cpp-yaml-cpp-{ver}".format(ver = com_github_jbeder_yaml_cpp_ver),
         urls = com_github_jbeder_yaml_cpp_urls,
@@ -224,6 +225,8 @@ def trpc_workspace(path_prefix = "", repo_name = "", **kwargs):
     ]
     http_archive(
         name = "com_github_tencent_rapidjson",
+        patch_args = ["-p1"],
+        patches = ["@trpc_cpp//third_party/com_github_tencent_rapidjson:0001-remove-non-compiling-assignment-operator.patch"],
         sha256 = com_github_tencent_rapidjson_sha256,
         strip_prefix = "rapidjson-{ver}".format(ver = com_github_tencent_rapidjson_ver),
         urls = com_github_tencent_rapidjson_urls,

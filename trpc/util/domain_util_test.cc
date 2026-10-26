@@ -72,7 +72,9 @@ TEST(DomainUtilTest, Ipv4NormalTest) {
 TEST(DomainUtilTest, Ipv4FailTest) {
   std::vector<std::string> addrs;
 
-  std::string domain = "www.notexistnotexist.com";
+  // The .invalid TLD is reserved and is guaranteed not to resolve. Using a
+  // made-up .com name makes this test depend on the machine's DNS behavior.
+  std::string domain = "not-exist.invalid";
   trpc::util::GetAddrFromDomain(domain, addrs);
   EXPECT_EQ(addrs.size(), 0);
 }

@@ -32,6 +32,19 @@ namespace trpc {
 
 namespace testing {
 
+TEST(ReactorImplTest, RejectsTasksAtConfiguredQueueLimit) {
+  FiberReactor::Options reactor_options;
+  reactor_options.id = 0;
+  reactor_options.max_task_queue_size = 2;
+
+  FiberReactor reactor(reactor_options);
+  ASSERT_TRUE(reactor.Initialize());
+  EXPECT_TRUE(reactor.SubmitTask([] {}, Reactor::Priority::kNormal));
+  EXPECT_TRUE(reactor.SubmitTask([] {}, Reactor::Priority::kNormal));
+  EXPECT_FALSE(reactor.SubmitTask([] {}, Reactor::Priority::kNormal));
+  reactor.Destroy();
+}
+
 TEST(ReactorImplTest, TestReactorImpl) {
   FiberReactor::Options reactor_options;
   reactor_options.id = 0;

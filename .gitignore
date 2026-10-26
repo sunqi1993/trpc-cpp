@@ -1,5 +1,7 @@
 .vscode/
 .idea/
+.omo/
+.opencode/
 
 bazel-*
 *.swp

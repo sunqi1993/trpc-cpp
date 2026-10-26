@@ -13,6 +13,7 @@
 
 #include <time.h>
 
+#include <cstdlib>
 #include <vector>
 
 #include "gmock/gmock.h"
@@ -64,9 +65,11 @@ TEST(remove_timeout_daily_file_test, test_RemoveTimeoutDailyLogFile) {
 
   // Make sure we don't get negative numbers like (1-2 = -1) on the 1st of every month
   if (create_count <= now_tm->tm_mday) {
-    // executable with full path info, e.g. :
-    // ....../k8-fastbuild/bin/trpc/log/default/sinks/local_file_sink_test
-    std::string exe_file_path = trpc::GetExePath();
+    // Bazel exposes runfiles and binaries read-only inside its test sandbox.
+    // Keep all files created by the test under its writable temporary directory.
+    const char* test_tmpdir = std::getenv("TEST_TMPDIR");
+    ASSERT_NE(test_tmpdir, nullptr);
+    std::string exe_file_path = std::string(test_tmpdir) + "/local_file_sink_test";
     std::cout << "exe_file_path:" << exe_file_path << std::endl;
 
     for (int i = 0; i < create_count; i++) {

@@ -34,6 +34,9 @@ uint32_t reactor_task_queue_size = 65536;
 FiberReactor::FiberReactor(const Options& options)
     : options_(options),
       task_notifier_(this) {
+  if (options_.max_task_queue_size == 0) {
+    options_.max_task_queue_size = 65536;
+  }
 }
 
 bool FiberReactor::Initialize() {
@@ -77,6 +80,9 @@ void FiberReactor::Update(EventHandler* event_handler) {
 bool FiberReactor::SubmitTask(Task&& task, [[maybe_unused]] Priority priority) {
   {
     std::scoped_lock lk(mutex_);
+    if (task_queue_.size() >= options_.max_task_queue_size) {
+      return false;
+    }
     task_queue_.push_back(std::move(task));
   }
 

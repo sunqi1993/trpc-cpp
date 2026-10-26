@@ -32,10 +32,6 @@
 
 namespace trpc::admin {
 
-extern "C" {
-extern void* __attribute__((weak)) _dl_sym(void* handle, const char* symbol, void* caller);
-}
-
 ///////////////////////////////////////////////////////////////////////////////////
 class StatisticContentionProfiler {
  public:
@@ -144,18 +140,33 @@ struct SystemCallFuncApi {
   MutexOp hook_pthread_mutex_unlock;
 };
 
-static SystemCallFuncApi sys_call_list;
+static SystemCallFuncApi sys_call_list = {nullptr, nullptr};
+static std::once_flag sys_call_once;
+static thread_local bool resolving_sys_mutex;
+
+[[noreturn]] static void FailMutexResolution(const char* message, size_t length) {
+  write(STDERR_FILENO, message, length);
+  _exit(127);
+}
 
 static void InitSysMutexLock() {
-  if (!sys_call_list.hook_pthread_mutex_lock) {
-    sys_call_list.hook_pthread_mutex_lock =
-        (MutexOp)_dl_sym(RTLD_NEXT, "pthread_mutex_lock", reinterpret_cast<void*>(InitSysMutexLock));
+  if (resolving_sys_mutex) {
+    constexpr char message[] = "recursive pthread mutex symbol resolution\n";
+    FailMutexResolution(message, sizeof(message) - 1);
   }
 
-  if (!sys_call_list.hook_pthread_mutex_unlock) {
-    sys_call_list.hook_pthread_mutex_unlock =
-        (MutexOp)_dl_sym(RTLD_NEXT, "pthread_mutex_unlock", reinterpret_cast<void*>(InitSysMutexLock));
-  }
+  resolving_sys_mutex = true;
+  std::call_once(sys_call_once, []() {
+    MutexOp lock = reinterpret_cast<MutexOp>(dlsym(RTLD_NEXT, "pthread_mutex_lock"));
+    MutexOp unlock = reinterpret_cast<MutexOp>(dlsym(RTLD_NEXT, "pthread_mutex_unlock"));
+    if (!lock || !unlock) {
+      constexpr char message[] = "pthread mutex symbols are unavailable\n";
+      FailMutexResolution(message, sizeof(message) - 1);
+    }
+    sys_call_list.hook_pthread_mutex_lock = lock;
+    sys_call_list.hook_pthread_mutex_unlock = unlock;
+  });
+  resolving_sys_mutex = false;
 }
 
 int TrpcPthreadMutexLockImpl(pthread_mutex_t* mutex) {

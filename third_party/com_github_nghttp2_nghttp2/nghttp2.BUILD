@@ -14,6 +14,10 @@ cc_library(
         "lib/includes/**/*.h",
         "lib/**/*.h",
     ]),
+    defines = [
+        "HAVE_ARPA_INET_H",
+        "HAVE_NETINET_IN_H",
+    ],
     includes = ["lib/includes"],
     linkstatic = 1,
 )
